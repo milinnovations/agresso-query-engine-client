@@ -5,6 +5,9 @@ from xml.etree import ElementTree
 import requests
 
 
+__version__ = "1.0.0"
+
+
 class AgressoQueryEngineClient:
     """
     Client application for Unit4 Agresso query engine service.
@@ -12,9 +15,7 @@ class AgressoQueryEngineClient:
 
     __slots__ = ("_username", "_password", "_client", "_service_url")
 
-    def __init__(
-        self, *, username: str, password: str, client: str, service_url: str
-    ) -> None:
+    def __init__(self, *, username: str, password: str, client: str, service_url: str) -> None:
         """
         Initialization.
 
@@ -40,14 +41,10 @@ class AgressoQueryEngineClient:
         action = "GetTemplateResultAsXML"
         headers = self._make_request_headers(action)
         payload = self._make_template_request_payload(action, template)
-        response = requests.post(
-            url=self._service_url, data=payload, headers=headers, timeout=5
-        )
+        response = requests.post(url=self._service_url, data=payload, headers=headers, timeout=5)
         response.raise_for_status()
         content = ElementTree.fromstring(response.content)
-        return ElementTree.fromstring(
-            content[0][0][0][1].text
-        )  # Raise exception if there's no text.
+        return ElementTree.fromstring(content[0][0][0][1].text)  # Raise exception if there's no text.
 
     def _make_request_headers(self, action: str) -> Dict[str, str]:
         """
