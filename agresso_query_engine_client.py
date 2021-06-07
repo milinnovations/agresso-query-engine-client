@@ -1,5 +1,6 @@
 from typing import Dict
 
+from abc import ABC, abstractmethod
 from xml.etree import ElementTree
 
 import requests
@@ -8,7 +9,24 @@ import requests
 __version__ = "1.0.0"
 
 
-class AgressoQueryEngineClient:
+class BaseClient(ABC):
+    """
+    Agresso query engine client base class.
+    """
+
+    @abstractmethod
+    def get_template_result_as_xml(self, template: int) -> ElementTree.Element:
+        """
+        Queries the given template and returns the response as an `ElementTree.Element` instance
+        if the request completed successfully.
+
+        Arguments:
+            template: The queried template ID.
+        """
+        pass
+
+
+class AgressoQueryEngineClient(BaseClient):
     """
     Client application for Unit4 Agresso query engine service.
     """
@@ -31,13 +49,7 @@ class AgressoQueryEngineClient:
         self._service_url = service_url
 
     def get_template_result_as_xml(self, template: int) -> ElementTree.Element:
-        """
-        Queries the given template and returns the response as an `ElementTree.Element` instance
-        if the request completed successfully.
-
-        Arguments:
-            template: The queried template ID.
-        """
+        """Inherited."""
         action = "GetTemplateResultAsXML"
         headers = self._make_request_headers(action)
         payload = self._make_template_request_payload(action, template)
@@ -94,3 +106,39 @@ class AgressoQueryEngineClient:
             f"  <quer:Password>{self._password}</quer:Password>"
             "</quer:credentials>"
         )
+
+
+class FileSystemClient(BaseClient):
+    """
+    Simple client for testing and development purposes that returns template
+    results from the file system, instead of querying a live Agresso service.
+
+    Template result can be registered using the `register_template_result()` method.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialization.
+        """
+
+        self._results: Dict[int, str] = {}
+        """
+        Template ID - result filename map.
+        """
+
+    def get_template_result_as_xml(self, template: int) -> ElementTree.Element:
+        """Inherited."""
+        path = self._results[template]
+        return ElementTree.parse(path).getroot()
+
+    def register_template_result(self, *, template: int, path: str) -> None:
+        """
+        Registers the result for the given template ID.
+
+        If a result was already registered for the given template ID, it will be overwritten.
+
+        Arguments:
+            template: The template ID the result in the specified file is associated to.
+            path: The path to the template result.
+        """
+        self._results[template] = path
