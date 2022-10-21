@@ -31,9 +31,9 @@ class AgressoQueryEngineClient(BaseClient):
     Client application for Unit4 Agresso query engine service.
     """
 
-    __slots__ = ("_username", "_password", "_client", "_service_url")
+    __slots__ = ("_username", "_password", "_client", "_service_url", "_timeout")
 
-    def __init__(self, *, username: str, password: str, client: str, service_url: str) -> None:
+    def __init__(self, *, username: str, password: str, client: str, service_url: str, timeout: int = 5) -> None:
         """
         Initialization.
 
@@ -42,18 +42,20 @@ class AgressoQueryEngineClient(BaseClient):
             password: User password.
             client: Agresso client ID.
             service_url: The URL of the Agresso service (eg. "https://foo.bar/baz/service.svc").
+            timeout: Request timeout in seconds.
         """
         self._username = username
         self._password = password
         self._client = client
         self._service_url = service_url
+        self._timeout = timeout
 
     def get_template_result_as_xml(self, template: int) -> ElementTree.Element:
         """Inherited."""
         action = "GetTemplateResultAsXML"
         headers = self._make_request_headers(action)
         payload = self._make_template_request_payload(action, template)
-        response = requests.post(url=self._service_url, data=payload, headers=headers, timeout=5)
+        response = requests.post(url=self._service_url, data=payload, headers=headers, timeout=self._timeout)
         response.raise_for_status()
         content = ElementTree.fromstring(response.content)
         return ElementTree.fromstring(content[0][0][0][1].text)  # Raise exception if there's no text.
